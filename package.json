@@ -1,0 +1,52 @@
+{
+  "name": "emdash-postal",
+  "version": "0.1.0",
+  "description": "Postal email provider plugin for EmDash CMS — deliver system and plugin email through your self-hosted Postal server's HTTP API",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    },
+    "./sandbox": "./dist/sandbox-entry.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "emdash",
+    "cms",
+    "plugin",
+    "email",
+    "postal",
+    "smtp",
+    "transactional"
+  ],
+  "author": "Undefined <https://undefined.charity>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/undefined-charity/emdash-postal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/undefined-charity/emdash-postal/issues"
+  },
+  "homepage": "https://github.com/undefined-charity/emdash-postal#readme",
+  "peerDependencies": {
+    "emdash": ">=0.32.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "emdash": "^0.32.0",
+    "tsdown": "^0.21.7",
+    "typescript": "^5.5.0"
+  },
+  "scripts": {
+    "build": "tsdown src/index.ts src/sandbox-entry.ts --format esm --dts --clean",
+    "dev": "tsdown src/index.ts src/sandbox-entry.ts --format esm --dts --watch",
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build"
+  }
+}

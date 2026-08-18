@@ -52,10 +52,29 @@ async function getSettings(ctx: PluginContext): Promise<Partial<PostalSettings>>
 
 interface PostalPayload {
 	to: string[];
+	cc?: string[];
 	from: string;
+	reply_to?: string;
 	subject: string;
 	plain_body: string;
 	html_body?: string;
+}
+
+/**
+ * EmDash's EmailMessage doesn't model CC/Reply-To, but the pipeline passes
+ * extra fields through to the deliver hook untouched. Senders (e.g. a contact
+ * form plugin) can attach `cc` (string | string[]) and `replyTo` (string);
+ * invalid or missing values are ignored.
+ */
+function extractExtras(message: Record<string, unknown>): { cc?: string[]; reply_to?: string } {
+	const extras: { cc?: string[]; reply_to?: string } = {};
+	const rawCc = (message as { cc?: unknown }).cc;
+	const ccList = (Array.isArray(rawCc) ? rawCc : rawCc !== undefined ? [rawCc] : [])
+		.filter((v): v is string => typeof v === "string" && isValidEmail(v));
+	if (ccList.length > 0) extras.cc = ccList;
+	const rawReplyTo = (message as { replyTo?: unknown }).replyTo;
+	if (typeof rawReplyTo === "string" && isValidEmail(rawReplyTo)) extras.reply_to = rawReplyTo;
+	return extras;
 }
 
 async function sendViaPostal(
@@ -216,14 +235,16 @@ export default {
 				}
 
 				const { message } = event;
+				const extras = extractExtras(message as unknown as Record<string, unknown>);
 				await sendViaPostal(ctx, settings as PostalSettings, {
 					to: [message.to],
+					...extras,
 					from: settings.fromAddress,
 					subject: message.subject,
 					plain_body: message.text,
 					html_body: message.html,
 				});
-				ctx.log.info("Email delivered via Postal", { to: message.to });
+				ctx.log.info("Email delivered via Postal", { to: message.to, ...(extras.cc ? { cc: extras.cc } : {}) });
 			},
 		},
 	},

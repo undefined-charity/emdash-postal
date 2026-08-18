@@ -7,6 +7,17 @@ Delivers EmDash's system and plugin email (admin invites, magic links,
 server** using Postal's HTTP API — no SMTP sockets, so it works in both
 trusted (Node/Docker) and sandboxed (Cloudflare Workers) plugin modes.
 
+## CC and Reply-To
+
+EmDash's `EmailMessage` doesn't model CC or Reply-To, but this plugin honors
+extra fields passed through the pipeline: attach `cc` (string or string[])
+and/or `replyTo` (string) to the message and they map to Postal's `cc` /
+`reply_to` parameters. Invalid addresses are ignored.
+
+```ts
+await ctx.email.send({ to, subject, text, html, cc: sender, replyTo: sender } as EmailMessage);
+```
+
 ## Installation
 
 ```bash

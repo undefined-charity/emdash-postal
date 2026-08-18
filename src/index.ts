@@ -12,7 +12,7 @@ import type { PluginDescriptor } from "emdash";
 export function emdashPostal(): PluginDescriptor {
 	return {
 		id: "emdash-postal",
-		version: "0.1.0",
+		version: "0.2.0",
 		format: "standard",
 		entrypoint: "emdash-postal/sandbox",
 		options: {},

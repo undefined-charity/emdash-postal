@@ -63,17 +63,36 @@ interface PostalPayload {
 /**
  * EmDash's EmailMessage doesn't model CC/Reply-To, but the pipeline passes
  * extra fields through to the deliver hook untouched. Senders (e.g. a contact
- * form plugin) can attach `cc` (string | string[]) and `replyTo` (string);
+ * form plugin) can attach `cc` (string | string[]), `replyTo` (string), and
+ * `headers` (Record<string, string>, e.g. List-Unsubscribe);
  * invalid or missing values are ignored.
  */
-function extractExtras(message: Record<string, unknown>): { cc?: string[]; reply_to?: string } {
-	const extras: { cc?: string[]; reply_to?: string } = {};
+function extractExtras(message: Record<string, unknown>): { cc?: string[]; reply_to?: string; headers?: Record<string, string> } {
+	const extras: { cc?: string[]; reply_to?: string; headers?: Record<string, string> } = {};
 	const rawCc = (message as { cc?: unknown }).cc;
 	const ccList = (Array.isArray(rawCc) ? rawCc : rawCc !== undefined ? [rawCc] : [])
 		.filter((v): v is string => typeof v === "string" && isValidEmail(v));
 	if (ccList.length > 0) extras.cc = ccList;
 	const rawReplyTo = (message as { replyTo?: unknown }).replyTo;
 	if (typeof rawReplyTo === "string" && isValidEmail(rawReplyTo)) extras.reply_to = rawReplyTo;
+
+	// Arbitrary headers, e.g. List-Unsubscribe / List-Unsubscribe-Post, which
+	// Gmail and Yahoo require from bulk senders (RFC 8058). Postal accepts these
+	// as a `headers` hash. Names and values are validated because a CR/LF in a
+	// header value is header injection — it would let a caller append headers of
+	// its own or terminate the header block entirely.
+	const rawHeaders = (message as { headers?: unknown }).headers;
+	if (rawHeaders && typeof rawHeaders === "object" && !Array.isArray(rawHeaders)) {
+		const headers: Record<string, string> = {};
+		for (const [name, value] of Object.entries(rawHeaders as Record<string, unknown>)) {
+			if (typeof value !== "string") continue;
+			if (!/^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/.test(name)) continue;
+			const clean = value.replace(/[\r\n]+/g, " ").trim();
+			if (clean) headers[name] = clean;
+		}
+		if (Object.keys(headers).length > 0) extras.headers = headers;
+	}
+
 	return extras;
 }
 

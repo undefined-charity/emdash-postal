@@ -1,7 +1,7 @@
 {
   "name": "emdash-postal",
-  "version": "0.2.0",
-  "description": "Postal email provider plugin for EmDash CMS — deliver system and plugin email through your self-hosted Postal server's HTTP API",
+  "version": "0.3.0",
+  "description": "Postal email provider plugin for EmDash CMS \u2014 deliver system and plugin email through your self-hosted Postal server's HTTP API",
   "type": "module",
   "main": "dist/index.mjs",
   "exports": {
